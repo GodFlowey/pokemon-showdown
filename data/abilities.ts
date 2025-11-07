@@ -5665,7 +5665,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 					this.boost(boost, pokemon, pokemon);
 				}
 			}
-		},
+		}
 		isNonstandard: "CAP",
 		flags: {},
 		name: "ImportError",
