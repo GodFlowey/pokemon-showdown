@@ -22143,19 +22143,14 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 				if (source.isAlly(target)) {
 					target.addvolatile('focusenergy');
 				} else {
-					target.forceSwitchFlag;
+					target.forceSwitch;
 				}
 			} else if (result === 1) {
 				if (source.isAlly(target)) {
-					boosts: { 
-						atk: 1,
-						spa: 1, 
+					this.boost({ atk: 1, spa: 1 }, target);
 					}
-				} else {
-					boosts: {
-						def: -1,
-						spd: -1,
-							}
+				else {
+					this.boost({ def: -1, spd: -1), target);
 				}
 			} else {
 				if (source.isAlly(target)) {
