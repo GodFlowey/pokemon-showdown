@@ -22157,7 +22157,6 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 			} else {
 				if (source.isAlly(target)) {
 					this.damage(Math.floor(target.getUndynamaxedHP() / 2), target, source);
-					}
 				} else {
 					if (!this.heal(Math.floor(target.baseMaxhp * 0.5))) {
 						return this.NOT_FAIL;
