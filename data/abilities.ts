@@ -5650,7 +5650,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 						}
 					}
 					let randomStat: BoostID | undefined = stats.length ? this.sample(stats) : undefined;
-					if randomStat boost[randomStat] = 1;
+					if (randomStat) boost[randomStat] = 1;
 
 					stats = [];
 					let statMinus: BoostID;
