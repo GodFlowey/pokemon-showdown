@@ -22150,7 +22150,7 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 					this.boost({ atk: 1, spa: 1 }, target);
 					}
 				else {
-					this.boost({ def: -1, spd: -1), target);
+					this.boost({ def: -1, spd: -1}, target);
 				}
 			} else {
 				if (source.isAlly(target)) {
