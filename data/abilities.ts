@@ -5663,6 +5663,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 					if (randomStat) boost[randomStat] = -1;
 
 					this.boost(boost, pokemon, pokemon);
+					}
 				}
 			}
 		},
