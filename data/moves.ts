@@ -22127,4 +22127,46 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 		type: "Fire",
 		contestType: "Beautiful",
 	},
+	memoryerror: {
+		num: -4,
+		accuracy: 100,
+		basePower: 0,
+		category: "Status",
+		isNonstandard: "CAP",
+		name: "MemoryError",
+		pp: 10,
+		priority: 0,
+		flags: { protect: 1 },
+		onHit(target, source) {
+			const result = this.random(3);
+			if (result === 0) {
+				if (source.isAlly(target)) {
+					target.addvolatile('focusenergy');
+				} else {
+					target.forceSwitchFlag: true;
+				}
+			} else if (result === 1) {
+				if (source.isAlly(target)) {
+					boosts: { atk: 1, spa: 1 }
+				} else {
+					boosts: {
+						def: -1,
+						spd: -1,
+							}
+				}
+			} else {
+				if (source.isAlly(target)) {
+					if (!this.heal(Math.floor(target.baseMaxhp * 0.5))) {
+						return this.NOT_FAIL;
+					}
+				} else {
+					this.damage(Math.floor(target.getUndynamaxedHP() / 2), target, source);
+						}
+					}
+			}
+		},
+		target: "normal",
+		type: "Dark",
+		contestType: "Beautiful",
+	},					
 };
