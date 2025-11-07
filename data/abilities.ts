@@ -5629,4 +5629,47 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 		rating: 3,
 		num: -3,
 	},
+	importerror: {
+		onStart(pokemon) {
+			let activated = false;
+			for (const target of pokemon.any()) {
+				if (!activated) {
+					this.add('-ability', pokemon, 'ImportError', 'boost');
+					activated = true;
+				}
+				if (target.volatiles ['substitute']) {
+					this.add('-immune', target);
+				} else {
+					let stats: BoostID[] = [];
+					const boost: SparseBoostsTable = {};
+					let statPlus: BoostID;
+					for (statPlus in pokemon.boosts) {
+						if (statPlus === 'accuracy' || statPlus === 'evasion') continue;
+						if (pokemon.boosts[statPlus] < 6) {
+							stats.push(statPlus);
+						}
+					}
+					let randomStat: BoostID | undefined = stats.length ? this.sample(stats) : undefined;
+					if randomStat boost[randomStat] = 1;
+
+					stats = [];
+					let statMinus: BoostID;
+					for (statMinus in pokemon.boosts) {
+						if (statMinus === 'accuracy' || statMinus === 'evasion') continue;
+						if (pokemon.boosts[statMinus] > -6 && statMinus !== randomStat) {
+							stats.push(statMinus);
+						}
+					randomStat = stats.length? this.sample(stats) : undefined;
+					if (randomStat) boost[randomStat] = -1;
+
+					this.boost(boost, pokemon, pokemon);
+				}
+			}
+		},
+		isNonstandard: "CAP",
+		flags: {},
+		name: "ImportError",
+		rating: 5,
+		num: -4,
+	},
 };
