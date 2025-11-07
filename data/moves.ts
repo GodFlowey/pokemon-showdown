@@ -22160,7 +22160,6 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 				} else {
 					this.damage(Math.floor(target.getUndynamaxedHP() / 2), target, source);
 						}
-					}
 			}
 		},
 		target: "normal",
