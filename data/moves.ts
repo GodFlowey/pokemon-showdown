@@ -22128,6 +22128,8 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 		contestType: "Beautiful",
 	},
 	memoryerror: {
+		shortdesc: "The user emits a pulse of glitchy energy onto an enemy or an ally. Having any number of effects.",
+		desc: "The user has a 1/3 chance to either forcefully swap the enemy out, heal them up to 50% of their maximum HP, or reducing their DEF and SPD by 2. If this targets an ally, it has a 1/3 chance to either give it increased critical hit chance, reduce their health by half, or increase their ATK and SPA by 2",
 		num: -4,
 		accuracy: 100,
 		basePower: 0,
@@ -22147,19 +22149,20 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 				}
 			} else if (result === 1) {
 				if (source.isAlly(target)) {
-					this.boost({ atk: 1, spa: 1 }, target);
+					this.boost({ atk: 2, spa: 2 }, target);
 					}
 				else {
-					this.boost({ def: -1, spd: -1}, target);
+					this.boost({ def: -2, spd: -2}, target);
 				}
 			} else {
 				if (source.isAlly(target)) {
+					this.damage(Math.floor(target.getUndynamaxedHP() / 2), target, source);
+					}
+				} else {
 					if (!this.heal(Math.floor(target.baseMaxhp * 0.5))) {
 						return this.NOT_FAIL;
 					}
-				} else {
-					this.damage(Math.floor(target.getUndynamaxedHP() / 2), target, source);
-						}
+				}
 			}
 		},
 		target: "normal",
