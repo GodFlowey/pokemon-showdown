@@ -5669,7 +5669,6 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 				}
 			}
 		},
-		isNonstandard: "CAP",
 		flags: {},
 		name: "ImportError",
 		rating: 5,
