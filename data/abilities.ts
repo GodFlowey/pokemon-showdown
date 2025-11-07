@@ -5630,6 +5630,8 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 		num: -3,
 	},
 	importerror: {
+		shortDesc: "When this Pokémon enters battle, it glitches every Pokémon on the field, lowering and raising a random stat",
+		desc: "When this Pokémon enters the battle, every Pokémon on the field has a random stat, barring evasion and accuracy, raised by 1. They also have a random stat, barring evasion and accuracy, lowered by 1",
 		onStart(pokemon) {
 			let activated = false;
 			for (const target of pokemon.any()) {
