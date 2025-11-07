@@ -22134,7 +22134,6 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 		accuracy: 100,
 		basePower: 0,
 		category: "Status",
-		isNonstandard: "CAP",
 		name: "MemoryError",
 		pp: 10,
 		priority: 0,
