@@ -22142,9 +22142,9 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 			const result = this.random(3);
 			if (result === 0) {
 				if (source.isAlly(target)) {
-					target.addvolatile('focusenergy');
+					target.addVolatile('focusenergy');
 				} else {
-					target.forceSwitch;
+					return this.forceSwitch(target);
 				}
 			} else if (result === 1) {
 				if (source.isAlly(target)) {
