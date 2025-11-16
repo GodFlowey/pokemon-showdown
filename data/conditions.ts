@@ -749,6 +749,37 @@ export const Conditions: import('../sim/dex-conditions').ConditionDataTable = {
 			this.add('-weather', 'none');
 		},
 	},
+	fatalerror: {
+		name: 'FatalError',
+		effectType: 'Weather',
+		duration: 0,
+		onEffectivenessPriority: -1,
+		onEffectiveness(typeMod, target, type, move) {
+			if (!target || !type || !move || move.category === 'Status') return;
+			this.debug(`FatalError modified effectiveness: ${type} vs ${target.name}, original mod: ${typeMod}`);
+			switch (typeMod) {
+				case 0: return 2;
+				case 1: return 2;
+				case 3: return 1;
+			}
+			return typeMod;
+		},
+		onFieldStart(field, source, effect) {
+			this.add('-weather', 'FatalError', '[from] ability: ' + effect.name, `[of] ${source}`);
+		},
+		onImmunuty(type, pokemon) {
+			if (pokemon.hasItem('utilityumbrella')) return;
+			if (type === 'brn' || type === 'par' || type === 'slp' || type === 'frz' || type === 'psn' || type === 'tox') return false;
+		},
+		onFieldResidualOrder: 1,
+		onFieldResidual() {
+			this.add('-weather', 'FatalError', '[upkeep]');
+			this.eachEvent('Weather');
+		},
+		onFieldEnd() {
+			this.add('-weather', 'none');
+		},
+	},
 
 	dynamax: {
 		name: 'Dynamax',
