@@ -22142,20 +22142,37 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 			const result = this.random(3);
 			if (result === 0) {
 				if (source.isAlly(target)) {
-					target.addVolatile('focusenergy');
+					if (!target.lastMove || target.volatiles['dynamax']) return false;
+					const lastMove = target.lastMove;
+					const moveSlot = target.getMoveData(lastMove.id);
+					if (
+						lastMove.flags['failinstruct'] || lastMove.isZ || lastMove.isMax ||
+						lastMove.flags['charge'] || lastMove.flags['recharge'] ||
+						trget.volatiles['beakblast'] || target.volatiles['focuspunch'] || target.volatiles['shelltrap'] || (moveSlot && moveSlot.pp <= 0)
+					) {
+						return false;
+				}
+				this.add('-singleturn', 'target', 'move: Memory Error', '[of] ${source}');
+				this.queue.prioritizeAction(this.queue.resolveAction({
+					choice: 'move',
+					pokemon: target,
+					moveid: target.lastMove.id,
+					targetLoc: target.lastMoveTargetLoc!,
+				})[0] as MoveAction);
 				} else {
-					return this.forceSwitch(target);
+					target.forceSwitchFlag = true;
 				}
 			} else if (result === 1) {
 				if (source.isAlly(target)) {
-					this.boost({ atk: 2, spa: 2 }, target);
+					this.boost({ atk: 1, spa: 1 }, target);
 					}
 				else {
-					this.boost({ def: -2, spd: -2}, target);
+					this.boost({ def: -1, spd: -1}, target);
 				}
 			} else {
 				if (source.isAlly(target)) {
-					this.damage(Math.floor(target.getUndynamaxedHP() / 2), target, source);
+					pokemon.addVolatile('perishsong');
+					this.add('-start', pokemon, 'perish2', '[silent]');
 				} else {
 					if (!this.heal(Math.floor(target.baseMaxhp * 0.5))) {
 						return this.NOT_FAIL;
@@ -22166,5 +22183,321 @@ export const Moves: import('../sim/dex-moves').MoveDataTable = {
 		target: "normal",
 		type: "Dark",
 		contestType: "Beautiful",
-	},					
+	},
+	reversescale: {
+		num: -5,
+		accuracy: 90,
+		basePower: 20,
+		category: "Physical",
+		name: "Reverse Scale",
+		pp: 12,
+		priority: 0,
+		flags: { charge: 1, protect: 1, mirror: 1, metronome: 1 },
+		onTryMove(attacker, defender, move) {
+			if (attacker.removeVolatile(move.id)) {
+				return;
+			}
+			this.add('-prepare', attacker, move.name);
+			this.boost({ atk: 1, spa: 1 }, attacker, attacker, move);
+			if (!this.runEvent('ChargeMove', attacker, defender, move)) {
+				return;
+			}
+			attacker.addVolatile('twoturnmove', defender);
+			return null;
+		},
+		multihit: [2, 5],
+		secondary: null,
+		target: "normal",
+		type: "Dragon",
+	},
+	royalslash: {
+		num: -6,
+		accuracy: 100,
+		basePower: 100,
+		category: "Physical",
+		name: "Royal Slash",
+		pp: 5,
+		priority: 0,
+		flags: { contact: 1, charge: 1, protect: 1, mirror: 1, metronome: 1 },
+		onTryMove(attacker, defender, move) {
+			if (attacker.removeVolatile(move.id)) {
+				return;
+			}
+			this.add('-prepare', attacker, move.name);
+			this.boost({ atk: 1 }, attacker, attacker, move);
+			if (!this.runEvent('ChargeMove', attacker, defender, move)) {
+				return;
+			}
+			attacker.addVolatile('twoturnmove', defender);
+			return null;
+		},
+		secondary: null,
+		target: "normal",
+		type: "Fairy",
+	},
+	traceback: {
+		num: -7,
+		accuracy: 80,
+		basePower: 70,
+		category: "Special",
+		priority: -5,
+		name: "Traceback",
+		pp: 10,
+		flags: { protect: 1, cantusetwice: 1 },
+		recoil: [33, 100],
+		onModifyType(move, pokemon, target) {
+			if (!target) return;
+			const typeChart = this.dex.types.names();
+			let bestType = 'Normal';
+			let bestEffectiveness = -Infinity;
+			for (const type of typeChart) {
+				const eff = this.dex.getEffectiveness(type, target);
+				if (eff > bestEffectiveness) {
+					bestEffectiveness = eff;
+					bestType = type;
+				}
+			}
+			move.type = bestType;
+			this.add('-start', pokemon, 'typechange', 'bestType', '[from] move: Traceback');
+		},
+		secondary: null,
+		target: "normal",
+		type: "Normal",
+		contestType: "Cool",
+	},
+	doublesmash: {
+		num: -8,
+		accuracy: 90,
+		basePower: 30,
+		category: "Physical",
+		name: "Double Smash",
+		pp: 15,
+		priority: 0,
+		flags: { contact: 1, protect: 1, mirror: 1, metronome: 1 },
+		multihit: 2,
+		critRatio: 2,
+		secondary: null,
+		target: "normal",
+		type: "Dragon",
+		contestType: "Cool",
+	},
+	whiteflag: {
+		num: -9,
+		accuracy: true,
+		basePower: 0,
+		category: "Status",
+		name: "White Flag",
+		pp: 10,
+		priority: 4,
+		flags: { noassist: 1, failcopycat: 1, failinstruct: 1 },
+		stallingMove: true,
+		volatileStatus: 'whiteflag',
+		onPrepareHit(pokemon) {
+			return !!this.queue.willAct() && this.runEvent('StallMove', pokemon);
+		},
+		onHit(pokemon) {
+			pokemon.addVolatile('stall');
+		},
+		condition: {
+			duration: 1,
+			onStart(target) {
+				this.add('-singleturn', target, 'Protect');
+			},
+			onTryHitPriority: 3,
+			onTryHit(target, source, move) {
+				if (!move.flags['protect'] || move.category === 'Status') {
+					if (['gmaxoneblow', 'gmaxrapidflow'].includes(move.id)) return;
+					if (move.isZ || move.isMax) target.getMoveHitData(move).zBrokeProtect = true;
+					return;
+				}
+				if (move.smartTarget) {
+					move.smartTarget = false;
+				} else {
+					this.add('-activate', target, 'move: Protect');
+				}
+				const lockedmove = source.getVolatile('lockedmove');
+				if (lockedmove) {
+					if (source.volatiles['lockedmove'].duration === 2) {
+						delete source.volatiles['lockedmove'];
+					}
+				}
+				if (this.checkMoveMakesContact(move, source, target)) {
+					target.switchFlag = true;
+				}
+				return this.NOT_FAIL;
+			},
+			onHit(target, source, move) {
+				if (move.isZOrMaxPowered && this.checkMoveMakesContact(move, source, target)) {
+					target.switchFlag = true;
+				}
+			},
+		},
+		secondary: null,
+		target: "self",
+		type: "Fairy",
+		zMove: { effect: 'clearnegativeboost' },
+		contestType: "Cool",
+	},
+	darkhour: {
+		num: -10,
+		accuracy: 100,
+		basePower: 75,
+		category: "Physical",
+		name: "Dark Hour",
+		pp: 10,
+		priority: 0,
+		flags: { protect: 1, mirror: 1 },
+		onModifyMove(move, source, target) {
+			const def = target.getStat('def');
+			const spd = target.getStat('spd');
+			if (def > spd) {
+				overrideDefensiveStat: 'def';
+			}
+		},
+		secondary: null,
+		target: "normal",
+		type: "Ghost",
+		contestType: "Cool",
+	},
+	belltoll: {
+		num: -11,
+		accuracy: true,
+		basePower: 0,
+		category: "Status",
+		name: "Bell Toll",
+		pp: 10,
+		priority: 0,
+		flags: { sound: 1 },
+		priorityChargeCallback(source) {
+			source.addVolatile('belltoll');
+		},
+		weather: 'raindance',
+		selfSwitch: true,
+		secondary: null,
+		condition: {
+			duration: 1,
+			onBeforeMovePriority: 100,
+			onBeforeMove(source, target, move) {
+				if (move.id !== 'belltoll') return;
+				this.add('-prepare', source, 'Bell Toll', '[premajor]');
+			},
+		},
+		target: "all",
+		type: "Steel",
+	},
+	iceclaw: {
+		num: -12,
+		accuracy: 90,
+		basePower: 85,
+		category: "Physical",
+		name: "Ice Claw",
+		pp: 10,
+		priority: 0,
+		flags: { contact: 1, protect: 1 },
+		onModifyCritRatio(critRatio, source, target, move) {
+			if (this.field.isWeather('snow')) {
+				return 5;
+			}
+		},
+		secondary: null,
+		target: "Normal",
+		type: "Ice",
+	},
+	landslide: {
+		num: -13,
+		accuracy: 90,
+		basePower: 120,
+		category: "Physical",
+		name: "Landslide",
+		pp: 5,
+		priority: 0,
+		flags: { contact: 1, protect: 1 },
+		recoil: [33, 100],
+		onHit(target, source, move) {
+			let success = false;
+			if (!target.volatiles['substitute'] || move.infiltrates) success = !!this.boost({ evasion: -1 });
+			const removeAll = ['spikes', 'toxicspikes', 'stealthrock', 'stickyweb', 'gmaxsteelsurge'];
+			const removeTarget = ['reflect', 'lightscreen', 'auroraveil', 'safeguard', 'mist', ...removeAll];
+			for (const targetCondition of removeTarget) {
+				if (target.side.removeSideCondition(targetCondition)) {
+					if (!removeAll.includes(targetCondition)) continue;
+					this.add('-sideend', target.side, this.dex.conditions.get(targetCondition).name, '[from] move: Landslide', `[of] ${source}`);
+					success = true;
+				}
+			}
+			for (const sideCondition of removeAll) {
+				if (source.side.removeSideCondition(sideCondition)) {
+					this.add('-sideend', source.side, this.dex.conditions.get(sideCondition).name, '[from] move: Landslide', `[of] ${source}`);
+					success = true;
+				}
+			}
+			this.field.clearTerrain();
+			return success;
+		},
+		hasCrashDamage: true,
+		onMoveFail(target, source, move) {
+			this.damage(source.baseMaxhp / 2, source, source, this.dex.conditions.get('High Jump Kick'));
+		},
+		secondary: null,
+		target: "allAdjacentFoes",
+		type: "Rock",
+	},
+	sublimescent: {
+		num: -14,
+		accuracy: 100,
+		basePower: 0,
+		category: "Status",
+		name: "Sublime Scent",
+		pp: 10,
+		priority: 0,
+		flags: { protect: 1, reflectable: 1, mirror: 1, metronome: 1, powder: 1 },
+		boosts: {
+			atk: -2,
+			spa: -2,
+			evasion: -2,
+		},
+		secondary: null,
+		target: "allAdjacentFoes",
+		type: "Grass",
+	},
+	rocklike: {
+		num: -15,
+		accuracy: true,
+		basePower: 0,
+		category: "Status",
+		name: "Rock-Like",
+		pp: 15,
+		priority: 2,
+		flags: {},
+		volatileStatus: 'spikyshield',
+		onPrepareHit(pokemon) {
+			return !!this.queue.willAct() && this.runEvent('StallMove', pokemon);
+		},
+		onHit(pokemon) {
+			pokemon.addVolatile('stall');
+			if (target.getTypes().join() === 'Rock' || !target.setType('Rock')) {
+				this.add('fail', target);
+				return null;
+			}
+			this.add('-start', target, 'typechange', 'Rock');
+		},
+		condition: {
+			duration: 1,
+			onTryHitPriority: 3,
+			onTryHit(target, source, move) {
+				if (this.checkMoveMakesContact(move, source, target)) {
+					this.damage(source.baseMaxhp / 8, source, target);
+				}
+				return this.NOT_FAIL;
+			},
+			onHit(target, source, move) {
+				if (move.isZOrMaxPowered && this.checkMoveMakesContact(move, source, target)) {
+					this.damage(source.baseMaxhp / 8, source, target);
+				}
+			},
+		},
+		secondary: null,
+		target: "self",
+		type: "Rock",
+	},
 };
