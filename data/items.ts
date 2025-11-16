@@ -8070,4 +8070,110 @@ export const Items: import('../sim/dex-items').ItemDataTable = {
 		gen: 8,
 		isNonstandard: "CAP",
 	},
+	arcqueenite: {
+		name: "Arcqueenite",
+		spritenum: 577,
+		megaStone: "Arcqueen-Mega",
+		megaEvolves: "Arcqueen",
+		itemUser: ["Arcqueen"],
+		onTakeItem(item, source) {
+			if (item.megaEvolves === source.baseSpecies.baseSpecies) return false;
+			return true;
+		},
+		num: -3,
+		gen: 6,
+		isNonstandard: "CAP",
+	},
+	whiteorb: {
+		name: "White Orb",
+		spritenum: 390,
+		onResidualOrder: 5,
+		onResidualSubOrder: 4,
+		onResidual(pokemon) {
+			if (pokemon.isActive && pokemon.baseSpecies.name === 'Regigigas' && !pokemon.transformed && !pokemon.volatiles['slowstart']) {
+				pokemon.formeChange('Regigigas-Primal', this.effect, true);
+				this.add('-item', pokemon, 'White Orb');
+				this.add('-message', `${pokemon.name} is finally getting its act together.`);
+			}
+		},
+		onTakeItem(item, source) {
+			if (source.baseSpecies.baseSpecies === 'Regigigas') return false;
+			return true;
+		},
+		itemUser: ["Regigigas"],
+		isPrimalOrb: true,
+		num: -4,
+		gen: 6,
+		isNonstandard: "CAP",
+	},
+	regirite: {
+		name: "Regirite",
+		spritenum: 577,
+		megaStone: "Regirock-Mega",
+		megaEvolves: "Regirock",
+		itemUser: ["Regirock"],
+		onTakeItem(item, source) {
+			if (item.megaEvolves === source.baseSpecies.baseSpecies) return false;
+			return true;
+		},
+		num: -5,
+		gen: 6,
+		isNonstandard: "CAP",
+	},
+	regite: {
+		name: "Regite",
+		spritenum: 577,
+		megaStone: "Regice-Mega",
+		megaEvolves: "Regice",
+		itemUser: ["Regice"],
+		onTakeItem(item, source) {
+			if (item.megaEvolves === source.baseSpecies.baseSpecies) return false;
+			return true;
+		},
+		num: -6,
+		gen: 6,
+		isNonstandard: "CAP",
+	},
+	registite: {
+		name: "Registite",
+		spritenum: 577,
+		megaStone: "Registeel-Mega",
+		megaEvolves: "Registeel",
+		itemUser: ["Registeel"],
+		onTakeItem(item, source) {
+			if (item.megaEvolves === source.baseSpecies.baseSpecies) return false;
+			return true;
+		},
+		num: -7,
+		gen: 6,
+		isNonstandard: "CAP",
+	},
+	regielite: {
+		name: "Regielite",
+		spritenum: 577,
+		megaStone: "Regieleki-Mega",
+		megaEvolves: "Regieleki",
+		itemUser: ["Regieleki"],
+		onTakeItem(item, source) {
+			if (item.megaEvolves === source.baseSpecies.baseSpecies) return false;
+			return true;
+		},
+		num: -8,
+		gen: 6,
+		isNonstandard: "CAP",
+	},
+	regidragite: {
+		name: "Regidragite",
+		spritenum: 577,
+		megaStone: "Regidrago-Mega",
+		megaEvolves: "Regidrago",
+		itemUser: ["Regidrago"],
+		onTakeItem(item, source) {
+			if (item.megaEvolves === source.baseSpecies.baseSpecies) return false;
+			return true;
+		},
+		num: -9,
+		gen: 6,
+		isNonstandard: "CAP",
+	},
 };
