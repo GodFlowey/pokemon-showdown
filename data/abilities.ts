@@ -924,7 +924,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 			this.field.setWeather('deltastream');
 		},
 		onAnySetWeather(target, source, weather) {
-			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream'];
+			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream', 'fatalerror'];
 			if (this.field.getWeather().id === 'deltastream' && !strongWeathers.includes(weather.id)) return false;
 		},
 		onEnd(pokemon) {
@@ -948,7 +948,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 			this.field.setWeather('desolateland');
 		},
 		onAnySetWeather(target, source, weather) {
-			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream'];
+			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream', 'fatalerror'];
 			if (this.field.getWeather().id === 'desolateland' && !strongWeathers.includes(weather.id)) return false;
 		},
 		onEnd(pokemon) {
@@ -2842,7 +2842,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 		onSwitchIn(pokemon) {
 			this.add('-ability', pokemon, 'Neutralizing Gas');
 			pokemon.abilityState.ending = false;
-			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream'];
+			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream', 'fatalerror'];
 			for (const target of this.getAllActive()) {
 				if (target.hasItem('Ability Shield')) {
 					this.add('-block', target, 'item: Ability Shield');
@@ -3372,7 +3372,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 			this.field.setWeather('primordialsea');
 		},
 		onAnySetWeather(target, source, weather) {
-			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream'];
+			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream', 'fatalerror'];
 			if (this.field.getWeather().id === 'primordialsea' && !strongWeathers.includes(weather.id)) return false;
 		},
 		onEnd(pokemon) {
@@ -5634,38 +5634,36 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 		desc: "When this Pokémon enters the battle, every Pokémon on the field has a random stat, barring evasion and accuracy, raised by 1. They also have a random stat, barring evasion and accuracy, lowered by 1",
 		onStart(pokemon) {
 			let activated = false;
-			for (const target of pokemon.any()) {
-				if (!activated) {
-					this.add('-ability', pokemon, 'ImportError', 'boost');
-					activated = true;
-				}
-				if (target.volatiles ['substitute']) {
-					this.add('-immune', target);
-				} else {
+			for (const side of this.sides) {
+				for (const target of side.active) {
+					if (!target || target.fainted) continue;
+
+					if (!activated) {
+						this.add('-ability', pokemon, 'ImportError', 'boost');
+					}
 					let stats: BoostID[] = [];
 					const boost: SparseBoostsTable = {};
-					let statPlus: BoostID;
-					for (statPlus in pokemon.boosts) {
+
+					for (const statPlus in target.boosts) {
 						if (statPlus === 'accuracy' || statPlus === 'evasion') continue;
-						if (pokemon.boosts[statPlus] < 6) {
-							stats.push(statPlus);
+						if (target.boosts[statPlus] < 6) {
+							stats.push(statPlus as BoostID);
 						}
 					}
-					let randomStat: BoostID | undefined = stats.length ? this.sample(stats) : undefined;
-					if (randomStat) boost[randomStat] = 1;
+				let randomStatUp = stats.length ? this.sample(stats) : undefined;
+					if (randomStatUp) boost[randomStatUp] = 1;
 
 					stats = [];
-					let statMinus: BoostID;
-					for (statMinus in pokemon.boosts) {
+					for (const statMinus in target.boosts) {
 						if (statMinus === 'accuracy' || statMinus === 'evasion') continue;
-						if (pokemon.boosts[statMinus] > -6 && statMinus !== randomStat) {
-							stats.push(statMinus);
+						if (target.boosts[statMinus] > -6 && statMinus !== randomStatUp) {
+							stats.push(statMinus as BoostID);
 						}
-					randomStat = stats.length? this.sample(stats) : undefined;
-					if (randomStat) boost[randomStat] = -1;
-
-					this.boost(boost, pokemon, pokemon);
 					}
+					let randomStatDown = stats.length ? this.sample(stats) : undefined;
+					if (randomStatDown) boost[randomStatDown] = -1;
+
+					this.boost(boost, target, pokemon);
 				}
 			}
 		},
@@ -5673,5 +5671,251 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 		name: "ImportError",
 		rating: 5,
 		num: -4,
+	},
+	mostlygoodfortune: {
+		onTryHit(pokemon, target, move) {
+			if (move.ohko) {
+				this.add('-immune', pokemon, '[from] ability: Mostly Good Fortune');
+				return null;
+			}
+		},
+		onModifyMove(move, attacker, defender) {
+			if (attacker.hasAbility('mostlygoodfortune')) {
+				this.debug('mostlygoodfortune - setting move accuracy to 95%');
+				move.accuracy = 95;
+			}
+		},
+		flags: {},
+		name: "Mostly Good Fortune",
+		rating: 2,
+		num: -5
+		},
+	fatalerror: {
+		onStart(source) {
+			this.field.setWeather('fatalerror');
+		},
+		onAnySetWeather(target, source, weather) {
+			const strongWeathers = ['desolateland', 'primordialsea', 'deltastream', 'fatalerror'];
+			if (this.field.getWeather().id === 'fatalerror' && !strongWeathers.includes(weather.id)) return false;
+		},
+		onEnd(pokemon) {
+			if (this.field.weatherState.source !== pokemon) return;
+			for (const target of this.getAllActive()) {
+				if (target === pokemon) continue;
+				if (target.hasAbility('fatalerror')) {
+					this.field.weatherState.source = target;
+					return;
+				}
+			}
+			this.field.clearWeather();
+		},
+		flags: {},
+		name: "Fatal Error",
+		rating: 4.5,
+		num: -6,
+	},
+	stretechy: {
+		onStart(pokemon) {
+			if (pokemon.side.totalFainted || pokemon.side.pokemon.length < 6) {
+				this.add('-activate', pokemon, 'ability: Stretechy');
+				const missingSlots = 6 - pokemon.side.pokemon.length;
+				const totalFallen = pokemon.side.totalFainted + missingSlots;
+				const fallen = Math.min(totalFallen, 5);
+				this.add('-start', pokemon, `fallen${fallen}`, '[silent]');
+				this.effectState.fallen = fallen;
+			}
+		},
+		onEnd(pokemon) {
+			this.add('-end', pokemon, `fallen${this.effectState.fallen}`, '[silent]');
+		},
+		onBasePowerPriority: 21,
+		onBasePower(basePower, attacker, defender, move) {
+			if (this.effectState.fallen) {
+				const powMod = [6144, 5734, 5325, 4915, 4506, 4096];
+				this.debug(`Stretechy boost: ${powMod[this.effectState.fallen]}/4096`);
+				return this.chainModify([powMod[this.effectState.fallen], 4096]);
+			}
+		},
+		flags: {},
+		name: "Stretechy",
+		rating: 4,
+		num: -7,
+	},
+	queenscourt: {
+		onEffectiveness(typeMod, target, type, move) {
+			if (!target || !move || move.category === 'Status') return;
+			if (!target.runImmunity(type)) {
+				return -1;
+			}
+			const mod = target.getEffectiveness(type);
+			if (mod <= 0) {
+				return -1;
+			}
+		},
+		onImmunity(type, pokemon) {
+			return false;
+		},
+		flags: { failroleplay: 1, noreceiver: 1, noentrain: 1, failskillswap: 1, breakable: 1 },
+		name: "Queen's Court",
+		rating: 5,
+		num: -8,
+	},
+	earthmover: {
+		onModifyTypePriority: -1,
+		onModifyType(move, pokemon) {
+			const noModifyType = [
+				'judgment', 'multiattack', 'naturalgift', 'revelationdance', 'technoblast', 'terrainpulse', 'weatherball',
+			];
+			if (move.type === 'Normal' && (!noModifyType.includes(move.id) || this.activeMove?.isMax) &&
+				!(move.isZ && move.category !== 'Status') && !(move.name === 'Tera Blast' && pokemon.terastallized)) {
+				move.type = 'Fire';
+				move.typeChangerBoosted = this.effect;
+			}
+		},
+		onBasePowerPriority: 23,
+		onBasePower(basePower, pokemon, target, move) {
+			if (move.typeChangerBoosted === this.effect) return this.chainModify([4915, 4096]);
+		},
+		onTryHit(target, source, move) {
+			if (target !== source && move.type === 'Ground') {
+				if (!this.heal(target.baseMaxhp / 4)) {
+					this.add('-immune', target, '[from] ability: Earth Mover');
+				}
+				return null;
+			}
+		},
+		flags: { breakble: 1 },
+		name: "Earth Mover",
+		rating: 4,
+		num: -9,
+	},
+	nucleation: {
+		onModifyTypePriority: -1,
+		onModifyType(move, pokemon) {
+			const noModifyType = [
+				'judgment', 'multiattack', 'naturalgift', 'revelationdance', 'technoblast', 'terrainpulse', 'weatherball',
+			];
+			if (move.type === 'Normal' && (!noModifyType.includes(move.id) || this.activeMove?.isMax) &&
+				!(move.isZ && move.category !== 'Status') && !(move.name === 'Tera Blast' && pokemon.terastallized) && (move.flags['contact'])) {
+				move.type = 'Fairy';
+				move.typeChangerBoosted = this.effect;
+			}
+		},
+		onBasePowerPriority: 23,
+		onBasePower(basePower, pokemon, target, move) {
+			if (move.typeChangerBoosted === this.effect) return this.chainModify([4915, 4096]);
+		},
+		onSourceModifyAccuracyPriority: -1,
+		onSourceModifyAccuracy(accuracy) {
+			if (typeof accuracy !== 'number') return;
+			if (this.field.weather === 'hail' || this.field.weather === 'snowscape') {
+				this.debug('nucleation - enhancing accuracy');
+				return true;
+			}
+		},
+		flags: {},
+		name: "Nucleation",
+		rating: 4,
+		num: -10,
+	},
+	alloyingelement: {
+		onModifyTypePriority: -1,
+		onModifyType(move, pokemon) {
+			const noModifyType = [
+				'judgment', 'multiattack', 'naturalgift', 'revelationdance', 'technoblast', 'terrainpulse', 'weatherball',
+			];
+			if (move.category === 'Special' && (!noModifyType.includes(move.id) || this.activeMove?.isMax) &&
+				!(move.isZ && move.category !== 'Status') && !(move.name === 'Tera Blast' && pokemon.terastallized)) {
+				move.type = 'Grass';
+				move.typeChangerBoosted = this.effect;
+			}
+		},
+		onBasePowerPriority: 23,
+		onBasePower(basePower, pokemon, target, move) {
+			if (move.typeChangerBoosted === this.effect) return this.chainModify([4915, 4096]);
+		},
+		onModifyWeightPriority: 1,
+		onModifyWeight(weighthg) {
+			return weighthg * 2;
+		},
+		flags: { breakable: 1 },
+		name: "Alloying Element",
+		rating: 4,
+		num: -11,
+	},
+	arcflash: {
+		onModifyTypePriority: -1,
+		onModifyType(move, pokemon) {
+			const noModifyType = [
+				'judgment', 'multiattack', 'naturalgift', 'revelationdance', 'technoblast', 'terrainpulse', 'weatherball',
+			];
+			if (move.type !== 'Electric' && (!noModifyType.includes(move.id) || this.activeMove?.isMax) &&
+				!(move.isZ && move.category !== 'Status') && !(move.name === 'Tera Blast' && pokemon.terastallized)) {
+				move.type = 'Fire';
+				move.typeChangerBoosted = this.effect;
+			}
+		},
+		onBasePowerPriority: 23,
+		onBasePower(basePower, pokemon, target, move) {
+			if (move.typeChangerBoosted === this.effect) return this.chainModify([4915, 4096]);
+		},
+		onModifyMovePriority: 1,
+		onModifyMove(move) {
+			// most of the implementation is in Battle#getTarget
+			move.tracksTarget = move.target !== 'scripted';
+		},
+		flags: {},
+		name: "Arc Flash",
+		rating: 4,
+		num: -12,
+	},
+	dragoncrystal: {
+		onModifyTypePriority: -1,
+		onModifyType(move, pokemon) {
+			const noModifyType = [
+				'judgment', 'multiattack', 'naturalgift', 'revelationdance', 'technoblast', 'terrainpulse', 'weatherball',
+			];
+			if (move.type === 'Normal' && (!noModifyType.includes(move.id) || this.activeMove?.isMax) &&
+				!(move.isZ && move.category !== 'Status') && !(move.name === 'Tera Blast' && pokemon.terastallized)) {
+				move.type = 'Water';
+				move.typeChangerBoosted = this.effect;
+			}
+		},
+		onBasePowerPriority: 23,
+		onBasePower(basePower, pokemon, target, move) {
+			if (move.typeChangerBoosted === this.effect) return this.chainModify([4915, 4096]);
+		},
+		onModifyMove(move) {
+			move.infiltrates = true;
+		},
+		flags: {},
+		name: "Dragon Crystal",
+		rating: 4,
+		num: -13,
+	},
+	thecreatorofthegiants: {
+		onModifyAtk(atk, attacker, defender, move) {
+			if (move.category === 'Physical') {
+				atk += Math.floor(attacker.getStat('def') * 0.25);
+			}
+			return atk;
+		},
+		onModifySpa(spa, attacker, defender, move) {
+			if (move.category === 'Special') {
+				spa += Math.floor(attacker.getStat('spd') * 0.25);
+			}
+			return spa;
+		},
+		onDamagingHitOrder: 1,
+		onDamagingHit(damage, target, source, move) {
+			if (this.checkMoveMakesContact(move, source, target, true)) {
+				this.damage(source.baseMaxhp / 8, source, target);
+				this.boost({ atk: 1 });
+			}
+		},
+		flags: {},
+		name: "The Creator of the Giants",
+		rating: 5,
+		num: -14,
 	},
 };
